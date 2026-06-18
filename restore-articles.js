@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * restore-articles.js
- * Restores accidentally updated articles back to original titles
- * Run this to undo the wrong updates
+ * restore-articles.js (FIXED)
+ * Restores the 2 accidentally updated articles to their original titles
  */
 
 import 'dotenv/config';
@@ -22,23 +21,23 @@ if (!LOGIN_URL || !ADMIN_URL || !USERNAME || !PASSWORD) {
 }
 
 /**
- * Articles that were accidentally updated with wrong content
- * Need to be restored to original titles
+ * Articles to restore with their CORRECT original titles
  */
 const RESTORE_LIST = [
   {
-    currentTitle: "Escortpiger i Danmark - Køb Escort Online",
-    currentMeta: "Find escortpiger i Danmark. Diskret møde, professionel service. Book direkte online. Samme dag levering til hele landet.",
-    // These were the WRONG articles we need to find and revert
-    wrongArticles: [
-      "Tantra Sex i Danmark - Guide til Massage og Teknikker",
-      "Escort - Find seriøse escorts og massage i Danmark"
-    ]
-  }
+    searchFor: "Escortpiger i Danmark - Køb Escort Online tantra",
+    restoreTitle: "Tantra Sex i Danmark - Guide til Massage og Teknikker",
+    restoreMeta: "",
+  },
+  {
+    searchFor: "Escortpiger i Danmark - Køb Escort Online eroguide",
+    restoreTitle: "Eroguide anmeldelser af escort piger",
+    restoreMeta: "",
+  },
 ];
 
-async function findAndRestoreArticle(page, wrongTitle, originalTitle, originalMeta) {
-  console.log(`\n🔍 Finding article: "${wrongTitle}"`);
+async function findAndRestoreArticle(page, searchTerm, restoreTitle, restoreMeta) {
+  console.log(`\n🔍 Finding article with: "${searchTerm.substring(0, 50)}..."`);
   
   // Go to AdminTopics
   await page.goto(ADMIN_URL, { waitUntil: 'networkidle' });
@@ -51,22 +50,21 @@ async function findAndRestoreArticle(page, wrongTitle, originalTitle, originalMe
     });
   });
   
-  // Find the article
+  // Find matching article
   let found = null;
   for (const item of items) {
-    if (item.toLowerCase().includes(wrongTitle.toLowerCase().substring(0, 30))) {
+    if (item.toLowerCase().includes(searchTerm.toLowerCase())) {
       found = item;
       break;
     }
   }
   
   if (!found) {
-    console.log(`   ❌ Article not found`);
+    console.log(`   ❌ Not found`);
     return false;
   }
   
   console.log(`   ✅ Found: "${found.substring(0, 60)}"`);
-  console.log(`   ↩️  Restoring to original title...`);
   
   // Click on it
   const allItems = await page.locator('li.rlbItem').all();
@@ -82,73 +80,56 @@ async function findAndRestoreArticle(page, wrongTitle, originalTitle, originalMe
   }
   
   if (!clicked) {
-    console.log(`   ❌ Could not click article`);
+    console.log(`   ❌ Could not click`);
     return false;
   }
   
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(1000);
   
-  // Get current title to know what to restore
+  // Get current title
   const currentTitle = await page.inputValue("#ctl00_MainContent_TbTitle");
-  console.log(`   Current title: "${currentTitle}"`);
+  console.log(`   Current: "${currentTitle.substring(0, 50)}..."`);
+  console.log(`   Restore: "${restoreTitle.substring(0, 50)}..."`);
   
-  // If it has our wrong update, restore to original
-  if (currentTitle.includes("Escortpiger i Danmark")) {
-    console.log(`   Restoring title to: "${originalTitle}"`);
-    
-    const titleField = "#ctl00_MainContent_TbTitle";
+  // Update title
+  const titleField = "#ctl00_MainContent_TbTitle";
+  try {
+    await page.click(titleField, { clickCount: 3 });
+    await page.press(titleField, "Backspace");
+    await page.type(titleField, restoreTitle);
+    console.log(`     ✅ Title updated`);
+  } catch (e) {
+    console.log(`     ❌ Error: ${e.message}`);
+    return false;
+  }
+  
+  // Save
+  if (!DRY_RUN) {
+    console.log(`   Saving...`);
     try {
-      await page.click(titleField, { clickCount: 3 });
-      await page.press(titleField, "Backspace");
-      await page.type(titleField, originalTitle);
-      console.log(`     ✅ Title restored`);
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(() => {}),
+        page.click("#ctl00_MainContent_BtnSave"),
+      ]);
+      console.log(`   ✅ Saved!`);
+      return true;
     } catch (e) {
-      console.log(`     ❌ Error: ${e.message}`);
+      console.log(`   ❌ Error saving: ${e.message}`);
       return false;
     }
-    
-    // Restore meta
-    const metaField = "#ctl00_MainContent_TbMetaDescription";
-    try {
-      await page.click(metaField, { clickCount: 3 });
-      await page.press(metaField, "Backspace");
-      // Just clear it - we don't know original
-      console.log(`     ✅ Meta cleared`);
-    } catch (e) {
-      console.log(`     ⚠️  Could not clear meta`);
-    }
-    
-    // Save
-    if (!DRY_RUN) {
-      console.log(`   Saving...`);
-      try {
-        await Promise.all([
-          page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(() => {}),
-          page.click("#ctl00_MainContent_BtnSave"),
-        ]);
-        console.log(`   ✅ Article restored!`);
-        return true;
-      } catch (e) {
-        console.log(`   ❌ Error saving: ${e.message}`);
-        return false;
-      }
-    } else {
-      console.log(`   (DRY-RUN: not saving)`);
-      return true;
-    }
   } else {
-    console.log(`   ℹ️  Title doesn't match our wrong update, skipping`);
-    return false;
+    console.log(`   (DRY-RUN: not saving)`);
+    return true;
   }
 }
 
 async function main() {
   console.log('\n' + '='.repeat(80));
-  console.log('🔄 RESTORE ACCIDENTALLY UPDATED ARTICLES');
+  console.log('🔄 RESTORE ARTICLES TO ORIGINAL TITLES');
   console.log('='.repeat(80));
   
-  if (DRY_RUN) console.log('⚠️  DRY-RUN MODE (not saving)\n');
+  if (DRY_RUN) console.log('⚠️  DRY-RUN MODE\n');
   
   const browser = await chromium.launch({
     headless: HEADLESS,
@@ -187,23 +168,16 @@ async function main() {
     
     console.log('✅ Logged in!\n');
     
-    // Restore each article
+    // Restore articles
     let restored = 0;
-    for (const restore of RESTORE_LIST) {
-      for (const wrongArticle of restore.wrongArticles) {
-        const result = await findAndRestoreArticle(
-          page, 
-          wrongArticle, 
-          wrongArticle, // We restore to original title (same as wrong article's original)
-          "" // We clear meta
-        );
-        if (result) restored++;
-        await page.waitForTimeout(2000);
-      }
+    for (const item of RESTORE_LIST) {
+      const result = await findAndRestoreArticle(page, item.searchFor, item.restoreTitle, item.restoreMeta);
+      if (result) restored++;
+      await page.waitForTimeout(2000);
     }
     
     console.log('\n' + '='.repeat(80));
-    console.log(`✅ Done! Restored ${restored} article(s)`);
+    console.log(`✅ Done! Restored ${restored}/${RESTORE_LIST.length} articles`);
     console.log('='.repeat(80) + '\n');
     
   } catch (err) {
