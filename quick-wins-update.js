@@ -42,7 +42,7 @@ const detectedSite = SITE || (SITE_URL?.includes('.se') ? 'se' : 'dk');
 const QUICK_WINS_SE = [
   {
     keyword: "eskort guide",
-    searchTerm: "Eskort Guide Sverige",
+    searchTerm: "Eskort Guide Sverige - Hitta",
     title: "Eskort Guide Sverige - Hitta Escorttjej Online",
     meta: "Eskort guide för Sverige. Hitta perfekt eskorttjej. Diskret bokring, professionell service. Alla regioner. Klicka här!",
   },
