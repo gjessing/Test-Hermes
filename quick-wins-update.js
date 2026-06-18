@@ -26,18 +26,18 @@ if (!LOGIN_URL || !ADMIN_URL || !USERNAME || !PASSWORD) {
 const detectedSite = SITE || (SITE_URL?.includes('.se') ? 'se' : 'dk');
 
 /**
- * Quick Wins - NOW WITH EXACT TITLES FROM DEBUG OUTPUT
- * From: node debug-articles.js output
- */
-const QUICK_WINS_DK = [
-  {
-    keyword: "eskortepiger",
-    // EXACT title from list (including slug at end if present)
-    searchTerm: "Escort Piger - Find Danmarks Bedste Escorts",
-    title: "Escortpiger i Danmark - Køb Escort Online",
-    meta: "Find escortpiger i Danmark. Diskret møde, professionel service. Book direkte online. Samme dag levering til hele landet.",
-  },
-];
+ /**
+  * Quick Wins for escort5.dk
+  */
+ const QUICK_WINS_DK = [
+   {
+     keyword: "eskortepiger",
+     // Search for just "Escort Piger" - the start of the real article title
+     searchTerm: "Escort Piger - Find Danmarks",
+     title: "Escortpiger i Danmark - Køb Escort Online",
+     meta: "Find escortpiger i Danmark. Diskret møde, professionel service. Book direkte online. Samme dag levering til hele landet.",
+   },
+ ];
 
 const QUICK_WINS_SE = [
   {
