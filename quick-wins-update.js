@@ -33,8 +33,8 @@ const QUICK_WINS_DK = [
   {
     keyword: "eskortepiger",
     article: "Escort Piger - Find Danmarks Bedste Escorts",
-    title: "Eskortepiger i Danmark - Køb Escort Online",
-    meta: "Find eskortepiger i Danmark. Diskret møde, professionel service. Book direkte online. Samme dag levering til hele landet.",
+    title: "Escortpiger i Danmark - Køb Escort Online",
+    meta: "Find escortpiger i Danmark. Diskret møde, professionel service. Book direkte online. Samme dag levering til hele landet.",
   },
 ];
 
